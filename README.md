@@ -1,0 +1,2 @@
+# vis-info
+- progetto individuale
