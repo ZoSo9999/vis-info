@@ -1,4 +1,4 @@
-var updateTime = 1000;
+var updateTime = 2000;
 var domain = [0,1000];
 
 var scaleX = d3.scaleLinear();
@@ -54,7 +54,8 @@ function killMosquito(){
 function moveMosquito() {
     var mosquitos = d3.selectAll("image[dead='false']")
                     .transition()
-                    .duration(updateTime);
+                    .duration(updateTime)
+                    .ease(d3.easeQuad);
     var time = svg.attr("time");
     if (time%3 == 1) {
         mosquitos.attr("x", function(d) { return scaleX(d.x1); })
