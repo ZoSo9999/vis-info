@@ -1,13 +1,4 @@
 var updateTime = 2000;
-var domain = [0,1000];
-
-var scaleX = d3.scaleLinear();
-scaleX.domain(domain);
-scaleX.range([10,140]);
-
-var scaleY = d3.scaleLinear();
-scaleY.domain(domain);
-scaleY.range([10,60]);
 
 var svg = d3.select("body").append("svg")
     .attr("id","my-svg")
@@ -15,20 +6,23 @@ var svg = d3.select("body").append("svg")
     .style("border", "2px solid black")
     .attr("time", "1");
 
+function createDomain(data) {
+    var values = data.map(function(d) {
+        return [d.x0, d.x1, d.x2, d.y0, d.y1, d.y2];
+    });
+    return [0,d3.max(values.flat())];
+}
 
-
-
-
-function addEvent() {
+function addEvent(scaleX,scaleY) {
     const svgElement = document.getElementById('my-svg');
     svgElement.addEventListener('click', (event) => {
         if (event.target === svgElement) {
-            moveMosquito();
+            moveMosquito(scaleX,scaleY);
         }
     });
 }
 
-function drawMosquito(data) {
+function drawMosquito(data,scaleX,scaleY) {
     svg.selectAll("image")
     .data(data)
     .enter()
@@ -50,11 +44,11 @@ function killMosquito(){
     }
 }
 
-function moveMosquito() {
+function moveMosquito(scaleX, scaleY) {
     var mosquitos = d3.selectAll("image[dead='false']")
                     .transition()
-                    .ease(d3.easeQuad)
-                    .duration(updateTime);
+                    .duration(updateTime)
+                    .ease(d3.easeQuad);
     var time = svg.attr("time");
     if (time%3 == 1) {
         mosquitos.attr("x", function(d) { return scaleX(d.x1); })
@@ -73,8 +67,16 @@ function moveMosquito() {
 
 d3.json("data.json")
     .then(function(data) {
-        drawMosquito(data);
-        addEvent();
+        var domain = createDomain(data);
+        var scaleX = d3.scaleLinear();
+        scaleX.domain(domain);
+        scaleX.range([10,140]);
+        var scaleY = d3.scaleLinear();
+        scaleY.domain(domain);
+        scaleY.range([10,60]);
+
+        drawMosquito(data,scaleX,scaleY);
+        addEvent(scaleX,scaleY);
         killMosquito();
 
 })
