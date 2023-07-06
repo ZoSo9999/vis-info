@@ -40,6 +40,7 @@ function killMosquito(){
     for (let i=0; i<images.length; i++) {
         images[i].addEventListener("click", function(e){
             e.target.setAttribute("dead","true");
+            e.target.setAttribute("href","dead-zanzara.png");
         });
     }
 }
