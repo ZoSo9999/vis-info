@@ -1,0 +1,364 @@
+
+<head>
+<style>
+
+body {
+  background-color: #D2B48C;
+}
+.italic-title {
+  font-style: italic;
+}
+
+.node {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: .6;
+}
+
+a.tooltip{
+    position:relative;
+}
+a.tooltip::before {
+    content: attr(data-tooltip) ;
+    font-size: 12px;
+    position:absolute;
+    z-index: 999;
+    width: 500px;
+    white-space:wrap;
+    bottom:9999px;
+    left: -300px;
+    background:#ffffcc;
+    color:#000000;
+    padding:0px 7px;
+    line-height: 24px;
+    height: 48px;
+    opacity: 0;
+    border-radius: 10px;
+}
+a.tooltip:hover::before {
+    opacity: 1;
+    top:22px;
+}
+a.tooltip:hover::after {
+    content: "";
+    opacity: 1;
+    width: 0; 
+    height: 0; 
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 5px solid black;
+    z-index: 999;
+    position:absolute;
+    white-space:nowrap;
+    top:17px;
+    left: 0px;
+}
+
+.center {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+</style>
+
+
+<title>Hrafnkels saga</title>
+
+<script>
+        function enableDrawResume() {
+            document.getElementById("drawButton").disabled = false;
+            document.getElementById("resumeButton").disabled = false;
+        }
+</script>
+
+
+</head>
+<body id="body">
+<center><h1 class="italic-title">Hrafnkels saga</h1></center>
+
+<table class="center">
+<tr>
+  <td>
+     <input type="button" id="useDefault" value="Use default data" onclick="useDefaultData();" />
+  </td>
+  <td>
+    <button id="drawButton" onClick="draw()" style="width:81px" disabled>Draw</button>
+  </td>
+</tr>
+<tr>
+  <td>
+     <input type="button" id="loadFileFromClient" value="Load from client" onclick="document.getElementById('files').click();" />
+     <input type="file" style="display:none;" id="files" name="file" accept=".json" onclick="enableDrawResume()"/>
+  </td>
+  <td>
+    <button id="resumeButton" onClick="resume()" style="width:81px" disabled>Resume</button>
+  </td>
+</tr>
+</table>
+<div style="height: 20px;"></div>
+
+
+
+<p id="lista"></p>
+
+<center>
+<svg style="border-style: solid"/>
+</center>
+<div style="height: 50px;"></div>
+<table class="center">
+<tr>
+</tr>
+<tr>
+  <td align="right">Charge:</td>
+  <td>
+    <input id="charge" type="number" value="-120" onchange="resume()">
+    <a href="#" class="tooltip" data-tooltip="A negative value (default=-30) results in node repulsion, while a positive value results in node attraction. For graph layout, negative values should be used."><img src="images/question_mark.png" alt="Punto interrogativo" width="12" height="12"></a>
+  </td>
+  <td>&nbsp;&nbsp;&nbsp;</td>
+
+  <td align="right">Gravity:</td>
+  <td><input id="gravity" type="number" value="0.1" onchange="resume()">
+    <a href="#" class="tooltip" data-tooltip="Gravity (default=0.1) is implemented as a weak geometric constraint similar to a virtual spring connecting each node to the center of the layout's size."><img src="images/question_mark.png" alt="Punto interrogativo" width="12" height="12"></a>
+  </td>
+  <td>&nbsp;&nbsp;&nbsp;</td>
+
+  <td align="right">Alpha:</td>
+  <td><input id="alpha" type="number" value="0.1" onchange="resume()">
+    <a href="#" class="tooltip" data-tooltip="The layout temperature (default=0.1): it is decremented during the simulation, causing nodes to move more slowly. When alpha drops below a threshold the simulation stops completely."><img src="images/question_mark.png" alt="Punto interrogativo" width="12" height="12"></a>
+  </td>
+</tr><tr>
+  <td align="right">Link Distance:</td>
+  <td><input id="linkDistance" type="number" value="50" onchange="resume()">
+    <a href="#" class="tooltip" data-tooltip="The target distance between linked nodes (default=20). For each iteration of the layout algorithm, the distance between each pair of linked nodes is computed and compared to the target distance."><img src="images/question_mark.png" alt="Punto interrogativo" width="12" height="12"></a>
+  </td>
+  <td>&nbsp;&nbsp;&nbsp;</td>
+
+  <td align="right">Friction:</td>
+  <td><input id="friction" type="number" value="0.9" max="0.99" onchange="resume()">
+    <a href="#" class="tooltip" data-tooltip="Approximates velocity decay (default=0.9): at each iteration, the particle velocity is scaled by the specified friction. Values should be in [0,1] (0 = all nodes are frozen in place; 1 = frictionless)."><img src="images/question_mark.png" alt="Punto interrogativo" width="12" height="12"></a>
+  </td>
+  <td>&nbsp;&nbsp;&nbsp;</td>
+
+  <td align="right">Charge Distance:</td>
+  <td><input id="chargeDistance" type="number" value="1000" onchange="resume()">
+    <a href="#" class="tooltip" data-tooltip="The maximum distance (default=infinite) over which charge forces are applied. Specifying a finite charge distance improves the performance and produces a more localized layout."><img src="images/question_mark.png" alt="Punto interrogativo" width="12" height="12"></a>
+  </td>
+<tr>
+  <td align="right">Link Strength:</td>
+  <td><input id="linkStrength" type="number" value="1" onchange="resume()">
+    <a href="#" class="tooltip" data-tooltip="The link strength (default=1) is the rigidity of links. Should be in the range [0,1] where 0 = links are ignored and 1 = links are taken into account."><img src="images/question_mark.png" alt="Punto interrogativo" width="12" height="12"></a>
+  </td>
+  <td>&nbsp;&nbsp;&nbsp;</td>
+
+  <td align="right">Theta:</td>
+  <td><input id="theta" type="number" value="0.8" onchange="resume()">
+    <a href="#" class="tooltip" data-tooltip="The Barnes-Hut approximation criterion (default=0.8). If the area of a quadrant in the quadtree over the distance between the quadrant and the node is less than theta the quadrant is used aggregated."><img src="images/question_mark.png" alt="Punto interrogativo" width="12" height="12"></a></td>
+</tr>
+</table>
+
+</body>
+
+<script src="d3.min.js"></script>
+<script>
+var listaLink='';
+var primaVolta=true;
+var svg = null;
+var force = null;
+var node;
+var link;
+var nodi = [];
+var links =[];
+var arrayNodi =[];
+var select = d3.selectAll("select");
+var reader
+var daFile = false; // whether data comes from a file
+var defaultData = false; // whether data is the default
+
+function useDefaultData() {
+  defaultData = true;
+        enableDrawResume(); 
+}
+
+function handleFileSelect(evt) {
+      var file = evt.target.files[0]; // File object
+
+      // files is a FileList of File objects. List some properties.
+   
+  reader = new FileReader();
+  reader.readAsText(file);
+    reader.onloadend= (function() {
+      // document.getElementById("addNode").disabled = true;
+      // document.getElementById("addLink").disabled = true;
+      daFile = true;
+    });
+}
+
+
+function addNode() {
+  var x = document.getElementById("nodo").value;
+  var nuovoNodo = true;
+  var y = true;
+  if(x=="") y = false;
+  if (y){
+    for(i=0; i<arrayNodi.length+1; i++){
+      if(arrayNodi[i]==x){
+        nuovoNodo=false;
+      }
+    }
+  }
+  if(y && nuovoNodo){
+  var nodo = {nome: x, group: 1};
+  nodi.push(nodo);
+  document.getElementById("nodo").value = "";
+  select.append("option")
+      .text(x);}
+  else if (y){alert("Nodo gi aggiunto");}
+  else {alert("Inserisci un nome per il nodo")}
+}
+
+
+function addLink(){
+  var x = document.getElementById("link1").selectedIndex;
+  var y = document.getElementById("link2").selectedIndex;
+  
+  if(x!=y){
+    links.push({source: x, target: y, value: 1});
+    var valx = document.getElementById("link1").value;
+    var valy = document.getElementById("link2").value;
+    listaLink += valx + ' -> ' + valy + '<br>';
+    document.getElementById("lista").innerHTML=listaLink;
+  }
+  else {alert("Scegli nodi diversi")}
+  
+} 
+
+
+function draw(){
+
+  var width = 900;
+  var height = 600;
+
+  var color = d3.scale.category10();
+
+  var charge = document.getElementById("charge").value;
+  var linkDistance = document.getElementById("linkDistance").value;
+  var gravity = document.getElementById("gravity").value;
+  var linkStrength = document.getElementById("linkStrength").value;
+  var friction = document.getElementById("friction").value;
+  var theta = document.getElementById("theta").value;
+  var alpha = document.getElementById("alpha").value;
+  var chargeDistance = document.getElementById("chargeDistance").value;
+  
+  force = d3.layout.force()
+      .charge(charge)
+      .linkDistance(linkDistance)
+      .gravity(gravity)
+      .friction(friction)
+      .linkStrength(linkStrength)
+      .size([width, height])
+      .alpha(alpha)
+      .theta(theta)
+      .chargeDistance(chargeDistance);
+  
+  if (primaVolta==true) {
+    primaVolta=false;
+  } else {  
+    node.remove();
+    link.remove();
+    svg.remove();
+  }
+ 
+  svg = d3.select("svg").attr("width", width)
+                .attr("height", height)
+                .attr("id", "svg")
+                .attr("style", "border-style: solid");
+  if(daFile){
+        var graph = JSON.parse(reader.result);
+        nodi = graph.nodes;
+        links = graph.links;
+      }
+
+        if(defaultData) {
+    nodi = [
+                          {"name":"Myriel","group":1},
+                          {"name":"Napoleon","group":1}
+                     ];
+       links = [
+                          {"source":1,"target":0,"value":1},
+                          {"source":1,"target":0,"value":1}
+                    ];
+        }
+          
+  force.nodes(nodi)
+    .links(links)
+    .start();
+
+  link = svg.selectAll(".link")
+        .data(links)
+            .enter().append("line")
+              .attr("class", "link")
+              .style("stroke-width", function(d) { return Math.sqrt(d.value); });
+
+  node = svg.selectAll(".node")
+              .data(nodi)
+        .enter().append("circle")
+        .attr("class", "node")
+        .attr("r", 5)
+        .style("fill", function(d) { return color(d.group); })
+              .call(force.drag);
+
+
+
+  node.append("title")
+    .text(function(d) { return d.label; });
+
+  force.on("tick", function() {
+    link.attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+
+    node.attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; }); 
+  });   
+
+}
+ 
+function resume(){
+
+  var width = 900;
+  var height = 600;
+
+  var charge = document.getElementById("charge").value;
+  var linkDistance = document.getElementById("linkDistance").value;
+  var gravity = document.getElementById("gravity").value;
+  var linkStrength = document.getElementById("linkStrength").value;
+  var friction = document.getElementById("friction").value;
+  var theta = document.getElementById("theta").value;
+  var alpha = document.getElementById("alpha").value;
+  var chargeDistance = document.getElementById("chargeDistance").value;
+  
+  force.charge(charge)
+    .linkDistance(linkDistance)
+    .gravity(gravity)
+    .friction(friction)
+    .linkStrength(linkStrength)
+    .size([width, height])
+    .alpha(alpha)
+    .theta(theta)
+    .chargeDistance(chargeDistance);
+
+  
+  force.start();
+
+}
+
+ document.getElementById('files').addEventListener('change', handleFileSelect, false);
+</script>
+  <div style="height: 130px;"></div>
+  <p style="text-align: center; bottom: 0;">Federico Tocci | Filippo Iacobelli</p>
+</html>
