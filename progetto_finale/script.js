@@ -148,7 +148,7 @@ function draw(){
       .chargeDistance(chargeDistance);
   
   if (!primaVolta) {
-	node.remove();
+	  node.remove();
     link.remove();
   }
 
