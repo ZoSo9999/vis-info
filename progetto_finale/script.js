@@ -51,8 +51,8 @@ function findConnectedComponent(nodes, links, selectedNodeId) {
     var nodeId = queue.shift();
     component.add(nodeId);
     visited.add(nodeId);
-
     links.forEach(function(link) {
+        console.log(link.source);
       if (link.source.id === nodeId && !visited.has(link.target.id)) {
         queue.push(link.target.id);
         visited.add(link.target.id);
@@ -79,7 +79,6 @@ function showLink(){
     d3.select("#link-info")
     .text(d.source.label + " " + actionDescription + " " +d.target.label)
     .style("visibility", "visible");
-    console.log(actionDescription);
   })
   .on("mouseout", function() {
   d3.select("#link-info").style("visibility", "hidden");
@@ -245,7 +244,7 @@ if(primaVolta===true){
     
 
     var selectedNodeId = clickedNode.id; // id del nodo selezionato
-    var selectedComponent = findConnectedComponent(node, link, selectedNodeId); // trova la componente connessa al nodo selezionato
+    var selectedComponent = findConnectedComponent(node, window.links, selectedNodeId); // trova la componente connessa al nodo selezionato
 
     // Filtra i link mantenendo solo quelli appartenenti alla componente connessa
     var filteredLinks = links.filter(function(d) {
