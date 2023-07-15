@@ -14,18 +14,17 @@
 <table class="center">
 <tr>
   <td>
-    <input type="button" id="loadFileFromClient" value="Load Data" onclick="leggiJSON()"/>  
+    <input type="button" class="saga-button" id="loadFileFromClient" value="Load Data" onclick="leggiJSON()"/>  
   </td>
   <td>
-     <button id="drawButton" onClick="draw()" style="width:81px" disabled>Draw</button>
+     <button id="drawButton" class="saga-button" onClick="draw()"  disabled>Draw</button>
   </td>
 </tr>
 <tr>
   <td>
-    <span id="check-span" class="hidden">
-      Storia fino al capitolo: 
-      <input type="checkbox" id="myCheckbox">
-      <a href="#" class="tooltip" data-tooltip="I nodi dell'ultimo capitolo a cui si fa riferimento sono più grandi rispetto agli altri"><img src="images/question_mark.png" alt="Punto interrogativo" width="12" height="12"></a>
+	 <span id="check-span" class="hidden">
+    <label style="font-family: 'Georgia', serif; font-size: 16px; font-weight: bold;">Storia fino al capitolo: </label><input type="checkbox" id="myCheckbox">
+      <a href="#" class="tooltip" data-tooltip="Vengono visualizzati tutti i nodi e i link presenti fino al capitolo scelto. I nodi appartenenti a quest'ultimo sono rappresentati in modo da essere ben visibili."><img src="images/question_mark.png" alt="Punto interrogativo" width="12" height="12"></a>
     </span>
   </td>
   <td>
@@ -59,6 +58,7 @@
 
 <center>
 <svg style="border-style: solid"/>
+<div id="link-info"></div>
 </center>
 <div style="height: 50px;"></div>
 <table style="border: 1px solid black;margin: 0 auto;">
@@ -113,7 +113,7 @@
 </tr>
 </table>
 <div style="padding: 10px 20px; display: flex; align-items: center;justify-content: center;">
-  <button id="updateButton" onClick="resume()" style="width:81px" disabled>Update Parameters</button>
+  <button id="updateButton" onClick="resume()"  class="saga-button"  disabled>Update Parameters</button>
 </div>
 
 </body>

@@ -14,7 +14,7 @@ function leggiJSON() {
           .then(response => response.json())
           .then(data => {
             // Assegna le sotto-tabelle a variabili separate
-            window.node = data.nodes;
+            window.nodes = data.nodes;
             window.links = data.links;
             window.action_codes = data.action_codes;
             window.gender_codes = data.gender_codes;
@@ -29,6 +29,7 @@ function leggiJSON() {
             checkbox.addEventListener('change', function() {
                 if (checkbox.checked) {
                 chapterSelect.classList.remove('hidden');
+				
                 } else {
                 chapterSelect.classList.add('hidden');
                 }
@@ -70,6 +71,54 @@ function isNodeInComponent(node, component) {
   return component.has(node.id);
 }
 
+function showLink(){
+  d3.selectAll(".link")
+  .on("mouseover", function(d) {
+    var actionCodesObject = window.action_codes[d.action];
+    var actionDescription = actionCodesObject['action description'];
+    d3.select("#link-info")
+    .text(d.source.label + " " + actionDescription + " " +d.target.label)
+    .style("visibility", "visible");
+    console.log(actionDescription);
+  })
+  .on("mouseout", function() {
+  d3.select("#link-info").style("visibility", "hidden");
+  });
+}
+
+
+function showNode(){
+  d3.selectAll(".node")                                                   //GESTIONE NODI
+  .on("mouseover", function(d) {            //ON MOUSEOVER
+    // Creazione del popup
+    var popup = d3.select("body")
+      .append("div")
+      .attr("class", "popup")
+      .style("left", (d.x-80) + "px")
+      .style("top", (d.y-20) + "px");
+
+    // Aggiungi le informazioni del nodo al popup
+    popup.append("h2")
+      .text(d.label + "[" +d.id+"]");
+    if (d.chapter !== undefined) {
+      popup.append("p")
+        .text("Chapter: " + d.chapter);
+    }
+    var genderCodesObject = window.gender_codes[d.gender];
+    var genderDescription = genderCodesObject['gender description'];
+    if (d.gender !== undefined) {
+      popup.append("p")
+        .text("Gender: " + genderDescription);
+    }})
+  .on("mouseout", function(d) {             //ON MOUSEOUT
+    // Rimuovi il popup
+    d3.select(".popup").remove();
+  });
+
+}
+
+
+
 function draw(){
   var width = 900;
   var height = 600;
@@ -99,28 +148,29 @@ function draw(){
       .chargeDistance(chargeDistance);
   
   if (!primaVolta) {
-    node.remove();
+	node.remove();
     link.remove();
-
   }
 
-  primaVolta=false;
+
  
   svg = d3.select("svg").attr("width", width)
                 .attr("height", height)
                 .attr("id", "svg")
                 .attr("style", "border-style: solid");
 
-  nodi = window.node;
+  nodi = window.nodes;
   links = window.links;
-
+  	
+if(primaVolta===true){
   links.forEach(function(link) {      //SHIFTING DOVUTO DAL FATTO CHE LA FUNZIONE LINKS PARTE IL CONTEGGIO DA 0 E NON DA 1
     link.source = link.source - 1;
     link.target = link.target - 1;
   });
+}
 
+  primaVolta=false;
 
-  console.log(links);
   force.nodes(nodi)
     .links(links)
     .start();
@@ -188,40 +238,14 @@ function draw(){
         .call(force.drag);
   }
  
-
-  d3.selectAll(".node")                                                   //GESTIONE NODI
-  .on("mouseover", function(d) {            //ON MOUSEOVER
-    // Creazione del popup
-    var popup = d3.select("body")
-      .append("div")
-      .attr("class", "popup")
-      .style("left", (d.x-80) + "px")
-      .style("top", (d.y-20) + "px");
-
-    // Aggiungi le informazioni del nodo al popup
-    popup.append("h2")
-      .text(d.label + "[" +d.id+"]");
-    if (d.chapter !== undefined) {
-      popup.append("p")
-        .text("Chapter: " + d.chapter);
-    }
-    var genderCodesObject = window.gender_codes[d.gender];
-    var genderDescription = genderCodesObject['gender description'];
-    if (d.gender !== undefined) {
-      popup.append("p")
-        .text("Gender: " + genderDescription);
-    }})
-  .on("mouseout", function(d) {             //ON MOUSEOUT
-    // Rimuovi il popup
-    d3.select(".popup").remove();
-  })
+	showNode();
+  d3.selectAll(".node")                                        //GESTIONE NODI
   .on("click", function(clickedNode) {              //ON CLICK
     d3.select(".popup").remove();
-    link.remove();
-    node.remove();
+    
 
     var selectedNodeId = clickedNode.id; // id del nodo selezionato
-    var selectedComponent = findConnectedComponent(nodes, links, selectedNodeId); // trova la componente connessa al nodo selezionato
+    var selectedComponent = findConnectedComponent(node, link, selectedNodeId); // trova la componente connessa al nodo selezionato
 
     // Filtra i link mantenendo solo quelli appartenenti alla componente connessa
     var filteredLinks = links.filter(function(d) {
@@ -229,6 +253,9 @@ function draw(){
              (isNodeInComponent(d.source, selectedComponent) || isNodeInComponent(d.target, selectedComponent));
     });
 
+	link.remove();
+    node.remove();
+	
     link = svg.selectAll(".link")
       .data(filteredLinks)
       .enter().append("line")
@@ -248,19 +275,12 @@ function draw(){
       .attr("r", 5)
       .style("fill", function(d) { return color(d.gender); })
       .call(force.drag);
-
+	
+	showLink();
+	showNode();
   });
 
-
-
-  d3.selectAll(".link")
-  .on("mouseover", function(d) {
-    var actionCodesObject = window.action_codes[d.action];
-    var actionDescription = actionCodesObject['action description'];
-
-    console.log(actionDescription);
-  });
-
+	showLink();
 
   force.on("tick", function() {
     link.attr("x1", function(d) { return d.source.x; })
