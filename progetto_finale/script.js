@@ -1,3 +1,4 @@
+
 var primaVolta=true;
 var svg = null;
 var force = null;
@@ -5,7 +6,7 @@ var node;
 var link;
 var nodi = [];
 var links =[];
-var select = d3.selectAll("select");
+//var select = d3.selectAll("select");
 
 
 
@@ -20,6 +21,7 @@ function leggiJSON() {
             window.gender_codes = data.gender_codes;
 
             document.getElementById("drawButton").disabled = false;
+            document.getElementById("loadFileFromClient").disabled = true;
             document.getElementById("updateButton").disabled = false;
             document.getElementById("check-span").classList.remove('hidden');
 
@@ -41,7 +43,7 @@ function leggiJSON() {
     }
 
 // Funzione per trovare la componente connessa al nodo selezionato
-function findConnectedComponent(nodes, links, selectedNodeId) {
+function findConnectedComponent(selectedNodeId) {
   var component = new Set();
   var visited = new Set();
 
@@ -51,14 +53,15 @@ function findConnectedComponent(nodes, links, selectedNodeId) {
     var nodeId = queue.shift();
     component.add(nodeId);
     visited.add(nodeId);
-    links.forEach(function(link) {
-        console.log(link.source);
-      if (link.source.id === nodeId && !visited.has(link.target.id)) {
-        queue.push(link.target.id);
-        visited.add(link.target.id);
-      } else if (link.target.id === nodeId && !visited.has(link.source.id)) {
-        queue.push(link.source.id);
-        visited.add(link.source.id);
+    window.links.forEach(function(link) {
+      if (parseInt(link.action) <= 2) {
+        if (link.source.id === nodeId && !visited.has(link.target.id)) {
+          queue.push(link.target.id);
+          visited.add(link.target.id);
+        } else if (link.target.id === nodeId && !visited.has(link.source.id)) {
+          queue.push(link.source.id);
+          visited.add(link.source.id);
+        }
       }
     });
   }
@@ -69,6 +72,116 @@ function findConnectedComponent(nodes, links, selectedNodeId) {
 // Funzione per verificare se un nodo appartiene a una componente specifica
 function isNodeInComponent(node, component) {
   return component.has(node.id);
+}
+
+function createTree(siblings) {
+
+  // Creazione del contenitore SVG
+  var svg2 = d3.select("#treeSVG");
+  // Compute the layout.
+  var tree = d3.layout.tree();//.size([width, height]),
+      nodes = tree.nodes(node),
+      links = tree.links(link);
+
+  // Create the link lines.
+  svg2.selectAll(".link")
+      .data(links)
+      .enter().append("path")
+      .attr("class", "link")
+      .attr("d", elbow);
+
+
+  var nodes = svg2.selectAll(".node")
+      .data(nodes)
+      .enter();
+
+  //First draw sibling line with blue line
+  svg2.selectAll(".sibling")
+      .data(siblings)
+      .enter().append("path")
+      .attr("class", "sibling")
+      .attr("d", sblingLine);
+
+  /**
+  This defines teh line between siblings.
+  **/
+  function sblingLine(d, i) {
+      //start point
+      var start = node.filter(function (v) {
+          if (d.source.id == v.id) {
+              return true;
+          } else {
+              return false;
+          }
+      });
+      //end point
+      var end = node.filter(function (v) {
+          if (d.target.id == v.id) {
+              return true;
+          } else {
+              return false;
+          }
+      });
+      //define teh start coordinate and end co-ordinate
+      var linedata = [{
+          x: start[0].x,
+          y: start[0].y
+      }, {
+          x: end[0].x,
+          y: end[0].y
+      }];
+      var fun = d3.svg.line().x(function (d) {
+          return d.x;
+      }).y(function (d) {
+          return d.y;
+      }).interpolate("linear");
+      return fun(linedata);
+  }
+
+  /*To make the nodes in flat mode.
+  This gets all teh nodes in same level*/
+  function flatten(root) {
+      var n = [],
+          i = 0;
+
+      function recurse(node) {
+          if (node.children) node.children.forEach(recurse);
+          if (!node.id) node.id = ++i;
+          n.push(node);
+      }
+      recurse(root);
+      return n;
+  }
+  /** 
+  This draws the lines between nodes.
+  **/
+  function elbow(d, i) {
+      if (d.target.no_parent) {
+          return "M0,0L0,0";
+      }
+      var diff = d.source.y - d.target.y;
+      //0.40 defines the point from where you need the line to break out change is as per your choice.
+      var ny = d.target.y + diff * 0.40;
+
+      linedata = [{
+          x: d.target.x,
+          y: d.target.y
+      }, {
+          x: d.target.x,
+          y: ny
+      }, {
+          x: d.source.x,
+          y: d.source.y
+      }]
+
+      var fun = d3.svg.line().x(function (d) {
+          return d.x;
+      }).y(function (d) {
+          return d.y;
+      }).interpolate("step-after");
+      return fun(linedata);
+  }
+
 }
 
 function showLink(){
@@ -124,6 +237,7 @@ function draw(){
 
   var color = d3.scale.category10();
 
+
   var charge = document.getElementById("charge").value;
   var linkDistance = document.getElementById("linkDistance").value;
   var gravity = document.getElementById("gravity").value;
@@ -145,6 +259,8 @@ function draw(){
       .alpha(alpha)
       .theta(theta)
       .chargeDistance(chargeDistance);
+  
+      
   
   if (!primaVolta) {
 	  node.remove();
@@ -238,21 +354,35 @@ if(primaVolta===true){
   }
  
 	showNode();
+  showLink();
+
+
   d3.selectAll(".node")                                        //GESTIONE NODI
   .on("click", function(clickedNode) {              //ON CLICK
     d3.select(".popup").remove();
     
 
     var selectedNodeId = clickedNode.id; // id del nodo selezionato
-    var selectedComponent = findConnectedComponent(node, window.links, selectedNodeId); // trova la componente connessa al nodo selezionato
+    var selectedComponent = findConnectedComponent(selectedNodeId); // trova la componente connessa al nodo selezionato
 
     // Filtra i link mantenendo solo quelli appartenenti alla componente connessa
     var filteredLinks = links.filter(function(d) {
-      return d.source.id === selectedNodeId || d.target.id === selectedNodeId ||
-             (isNodeInComponent(d.source, selectedComponent) || isNodeInComponent(d.target, selectedComponent));
+      return isNodeInComponent(d.source, selectedComponent)
+        && isNodeInComponent(d.target, selectedComponent)
+        && parseInt(d.action)<=2;
     });
 
-	link.remove();
+    // var sameLevelLinks = filteredLinks.filter(function(d) {
+    //   return parseInt(d.action) != 1;
+    // });
+    // var siblings = [];
+    // sameLevelLinks.forEach(function(d) {
+    //   couple = {"source":d.source.id,
+    //             "target":d.target.id};
+    //   siblings.push(couple);
+    // });
+
+	  link.remove();
     node.remove();
 	
     link = svg.selectAll(".link")
@@ -271,15 +401,20 @@ if(primaVolta===true){
       .data(filteredNodes)
       .enter().append("circle")
       .attr("class", "node")
-      .attr("r", 5)
+      .attr("r", function(d) {
+        if (d.id === selectedNodeId) {
+            return 8;
+        } else {
+            return 5; 
+        }
+      })
       .style("fill", function(d) { return color(d.gender); })
       .call(force.drag);
 	
-	showLink();
-	showNode();
+	    showLink();
+	    showNode();
+      //createTree(siblings);
   });
-
-	showLink();
 
   force.on("tick", function() {
     link.attr("x1", function(d) { return d.source.x; })
@@ -290,7 +425,8 @@ if(primaVolta===true){
     node.attr("cx", function(d) { return d.x; })
         .attr("cy", function(d) { return d.y; }); 
   });   
-
+  
+  
 }
  
 function resume(){
@@ -321,3 +457,11 @@ function resume(){
   force.start();
 
 }
+
+window.addEventListener("beforeunload", function(event) {
+  document.getElementById("drawButton").disabled = true;
+  document.getElementById("updateButton").disabled = true;
+  document.getElementById("myCheckbox").checked = false;
+  document.getElementById("check-span").classList.add('hidden');
+  //event.returnValue = "Stai per lasciare la pagina. Sei sicuro di volerla ricaricare?";
+});
