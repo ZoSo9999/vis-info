@@ -6,6 +6,9 @@ var node;
 var link;
 var nodi = [];
 var links =[];
+var width = 900;
+var height = 600;
+var color = d3.scale.category10();
 //var select = d3.selectAll("select");
 
 
@@ -74,114 +77,80 @@ function isNodeInComponent(node, component) {
   return component.has(node.id);
 }
 
-function createTree(siblings) {
+function drawNode(svg,n,x,y){
+  console.log(y)
+  node = svg.selectAll(".node")
+      .data(n)
+      .enter().append("circle")
+      .attr("class", "node")
+      .attr("r", 5)
+      .style("fill", function(d) { return color(d.gender); })
+      .attr("cx", (d, i) => (i+1) * x)
+      .attr("cy",y);
+      
+}
 
-  // Creazione del contenitore SVG
-  var svg2 = d3.select("#treeSVG");
-  // Compute the layout.
-  var tree = d3.layout.tree();//.size([width, height]),
-      nodes = tree.nodes(node),
-      links = tree.links(link);
-
-  // Create the link lines.
-  svg2.selectAll(".link")
-      .data(links)
-      .enter().append("path")
-      .attr("class", "link")
-      .attr("d", elbow);
+function drawEdges(svg,descents){
+  link = svg.selectAll(".link")
+  .data(descents)
+  .enter().append("line")
+  .attr("class", "link")
+  .style("stroke-width", function(d) { return 3; })
+  .style("stroke","#828282");
+}
 
 
-  var nodes = svg2.selectAll(".node")
-      .data(nodes)
-      .enter();
+function createTree(filteredNodes,filteredLinks) {
+  
+  allNodes = [];
+  spanY = 100;
+  levelLinks = [];
+  svg = d3.select("#treeSVG").attr("width", width)
+          .attr("height", height)
+          .attr("class",null);
+  descents = filteredLinks.filter(function(l) {
+      return parseInt(l.action)==1;
+    });
+  pairs = filteredLinks.filter(function(l) {
+    return parseInt(l.action)!=1;
+  });
 
-  //First draw sibling line with blue line
-  svg2.selectAll(".sibling")
-      .data(siblings)
-      .enter().append("path")
-      .attr("class", "sibling")
-      .attr("d", sblingLine);
-
-  /**
-  This defines teh line between siblings.
-  **/
-  function sblingLine(d, i) {
-      //start point
-      var start = node.filter(function (v) {
-          if (d.source.id == v.id) {
-              return true;
-          } else {
-              return false;
-          }
-      });
-      //end point
-      var end = node.filter(function (v) {
-          if (d.target.id == v.id) {
-              return true;
-          } else {
-              return false;
-          }
-      });
-      //define teh start coordinate and end co-ordinate
-      var linedata = [{
-          x: start[0].x,
-          y: start[0].y
-      }, {
-          x: end[0].x,
-          y: end[0].y
-      }];
-      var fun = d3.svg.line().x(function (d) {
-          return d.x;
-      }).y(function (d) {
-          return d.y;
-      }).interpolate("linear");
-      return fun(linedata);
-  }
-
-  /*To make the nodes in flat mode.
-  This gets all teh nodes in same level*/
-  function flatten(root) {
-      var n = [],
-          i = 0;
-
-      function recurse(node) {
-          if (node.children) node.children.forEach(recurse);
-          if (!node.id) node.id = ++i;
-          n.push(node);
+  while (filteredNodes.length != 0){
+    let levelNodes = [];
+    for (let i = 0; i < filteredNodes.length; i++){
+      let flag = true;
+      for(let j=0;j<descents.length;j++){
+        if (descents[j].source == filteredNodes[i]) {
+          flag = false;
+          break;
+        }
       }
-      recurse(root);
-      return n;
-  }
-  /** 
-  This draws the lines between nodes.
-  **/
-  function elbow(d, i) {
-      if (d.target.no_parent) {
-          return "M0,0L0,0";
+      if (flag == true) {
+        levelNodes.push(filteredNodes[i]);
+        filteredNodes.splice(i, 1);
+        i--;
       }
-      var diff = d.source.y - d.target.y;
-      //0.40 defines the point from where you need the line to break out change is as per your choice.
-      var ny = d.target.y + diff * 0.40;
+    }
+    allNodes = allNodes.concat(levelNodes);
+    console.log(allNodes)
+    spanX = width/(levelNodes.length+1);
+    drawNode(svg,allNodes,spanX,spanY);
+    spanY += 100;
+    drawEdges(svg,levelLinks);
+    levelLinks = [];
+    for (let i = 0; i < descents.length; i++){
+      for(let j=0;j<levelNodes.length;j++){
+        if (descents[i].target == levelNodes[j]) {
+          levelLinks.push(descents[i]);
+          descents.splice(i, 1);
+          i--;
+          break;
+        }
+      }
+    }
 
-      linedata = [{
-          x: d.target.x,
-          y: d.target.y
-      }, {
-          x: d.target.x,
-          y: ny
-      }, {
-          x: d.source.x,
-          y: d.source.y
-      }]
-
-      var fun = d3.svg.line().x(function (d) {
-          return d.x;
-      }).y(function (d) {
-          return d.y;
-      }).interpolate("step-after");
-      return fun(linedata);
   }
-
+  drawEdges(svg,pairs);
 }
 
 function showLink(){
@@ -232,11 +201,6 @@ function showNode(){
 
 
 function draw(){
-  var width = 900;
-  var height = 600;
-
-  var color = d3.scale.category10();
-
 
   var charge = document.getElementById("charge").value;
   var linkDistance = document.getElementById("linkDistance").value;
@@ -269,10 +233,8 @@ function draw(){
 
 
  
-  svg = d3.select("svg").attr("width", width)
-                .attr("height", height)
-                .attr("id", "svg")
-                .attr("style", "border-style: solid");
+  svg = d3.select("#graphSVG").attr("width", width)
+                .attr("height", height);
 
   nodi = window.nodes;
   links = window.links;
@@ -393,7 +355,7 @@ if(primaVolta===true){
       .style("stroke","#828282");
 
     // Filtra i nodi mantenendo solo quelli appartenenti alla componente connessa
-    var filteredNodes = nodes.filter(function(d) {
+    var filteredNodes = nodi.filter(function(d) {
       return isNodeInComponent(d, selectedComponent);
     });
 
@@ -413,7 +375,7 @@ if(primaVolta===true){
 	
 	    showLink();
 	    showNode();
-      //createTree(siblings);
+      createTree(filteredNodes,filteredLinks);
   });
 
   force.on("tick", function() {
@@ -463,5 +425,6 @@ window.addEventListener("beforeunload", function(event) {
   document.getElementById("updateButton").disabled = true;
   document.getElementById("myCheckbox").checked = false;
   document.getElementById("check-span").classList.add('hidden');
+  document.getElementById("treeSVG").classList.add('hidden');
   //event.returnValue = "Stai per lasciare la pagina. Sei sicuro di volerla ricaricare?";
 });
