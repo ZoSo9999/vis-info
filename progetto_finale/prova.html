@@ -1,46 +1,103 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <title>Grafico Genealogico</title>
-   
-  </head>
-  <body>
-    <svg id="container" width="1200" height="1000"></svg>
-    <script src="d3.v7.min.js"></script>
-    <script>
-      const svg = d3.select("#container");
+<head>
+  <meta charset="utf-8">
+  <title>Albero</title>
+  <script src="https://d3js.org/d3.v3.min.js"></script>
+  <style>
+    .node {
+      fill: #ccc;
+      stroke: #fff;
+      stroke-width: 2px;
+    }
+    .link {
+      fill: none;
+      stroke: #999;
+      stroke-opacity: 0.6;
+      stroke-width: 2px;
+    }
+  </style>
+</head>
+<body>
+  <svg width="500" height="500"></svg>
 
-function disegnaCerchi(datiCerchi,i) {
-  const cerchi = svg.selectAll("circle")
-    .data(datiCerchi)
-    .enter()
-    .append("circle");
+  <script>
+    var nodes = [
+      { id: 1 },
+      { id: 2 },
+      { id: 3 },
+      { id: 4 },
+      { id: 5 }
+      // Aggiungi altri nodi se necessario
+    ];
 
-  cerchi.merge(cerchi)
-    .attr("cx", (d, i) => (i + 1) * 80) // Posizione lungo l'asse x
-    .attr("cy", i*100) // Posizione lungo l'asse y
-    .attr("r", (d) => d) // Raggio dei cerchi basato sui dati
-    .attr("fill", "steelblue"); // Colore dei cerchi
-}
+    var links = [
+      { source: 1, target: 2, action: 1 },
+      { source: 1, target: 3, action: 2 },
+      { source: 3, target: 4, action: 1 },
+      { source: 3, target: 5, action: 2 }
+      // Aggiungi altri link se necessario
+    ];
 
-// Creiamo un array di dati per le iterazioni
-const datiIterazioni = [
-  [20, 40, 60],
-  [10, 30, 50],
-  [15, 25, 35, 45, 55, 60]
-];
+    drawTree(nodes, links);
 
-// Iteriamo attraverso l'array di dati e chiamiamo la funzione disegnaCerchi() per ogni iterazione
-for (let i = 0; i < datiIterazioni.length; i++) {
-  const datiIterazione = datiIterazioni[i];
-  disegnaCerchi(datiIterazione,i+1);
-}
+    function drawTree(nodes, links) {
+      var width = 500;
+      var height = 500;
 
-    </script>
-  </body>
+      var tree = d3.layout.tree()
+        .size([width, height]);
+
+      var diagonal = d3.svg.diagonal()
+        .projection(function(d) { return [d.y, d.x]; });
+
+      var svg = d3.select("svg")
+        .append("g")
+        .attr("transform", "translate(50, 50)");
+
+      var root = nodes[0];
+
+// Creazione della gerarchia dei nodi
+var nodeById = d3.map();
+nodes.forEach(function(node) {
+  node.children = []; // Inizializza 'children' come un array vuoto
+  nodeById.set(node.id, node);
+});
+links.forEach(function(link) {
+  var parent = nodeById.get(link.source);
+  var child = nodeById.get(link.target);
+  if (!parent.children) {
+    parent.children = []; // Inizializza 'children' come un array vuoto se non è ancora definito
+  }
+  parent.children.push(child);
+});
+
+
+      var nodes = tree.nodes(root);
+      var links = tree.links(nodes);
+
+      var link = svg.selectAll(".link")
+        .data(links)
+        .enter().append("path")
+        .attr("class", "link")
+        .attr("d", diagonal);
+
+      var node = svg.selectAll(".node")
+        .data(nodes)
+        .enter().append("circle")
+        .attr("class", "node")
+        .attr("r", 4)
+        .attr("cx", function(d) { return d.y; })
+        .attr("cy", function(d) { return d.x; });
+
+      var text = svg.selectAll(".text")
+        .data(nodes)
+        .enter().append("text")
+        .attr("class", "text")
+        .attr("x", function(d) { return d.y + 10; })
+        .attr("y", function(d) { return d.x; })
+        .text(function(d) { return d.id; });
+    }
+  </script>
+</body>
 </html>
-
-
-
-  

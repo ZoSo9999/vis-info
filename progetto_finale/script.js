@@ -11,8 +11,6 @@ var height = 600;
 var color = d3.scale.category10();
 //var select = d3.selectAll("select");
 
-
-
 function leggiJSON() {
   fetch('hrafnkel_saga_network.json') 
           .then(response => response.json())
@@ -85,8 +83,8 @@ function drawNode(svg,n,x,y){
       .attr("class", "node")
       .attr("r", 5)
       .style("fill", function(d) { return color(d.gender); })
-      .attr("cx", (d, i) => (i+1) * x)
-      .attr("cy",y);
+      .attr("cx", (d, i) => (i+1) * (x/10))
+      .attr("cy",(d, i) => y*(i/5));
       
 }
 
@@ -99,58 +97,99 @@ function drawEdges(svg,descents){
   .style("stroke","#828282");
 }
 
+function findRootNode(nodes, links) {
+  var nodeIdsWithParents = new Set();
+  
+  // Trova i nodi che hanno un nodo genitore
+  links.forEach(function(link) {
+    nodeIdsWithParents.add(link.target.id);
+  });
+  
+  // Trova il nodo che non ha un nodo genitore
+  var rootNode = nodes.find(function(node) {
+    return !nodeIdsWithParents.has(node.id);
+  });
+  return rootNode;
+}
 
 function createTree(filteredNodes,filteredLinks) {
-  
-  allNodes = [];
-  spanY = 100;
-  levelLinks = [];
-  svg = d3.select("#treeSVG").attr("width", width)
+
+      var width = 700;
+      var height = 700;
+      var margin = { top: 20, right: 20, bottom: 20, left: 20 }; // Margine intorno all'albero
+
+      var tree = d3.layout.tree()
+      .size([height - margin.top - margin.bottom, width - margin.left - margin.right]);
+
+      var diagonal = d3.svg.diagonal()
+        .projection(function(d) { return [d.y, d.x]; });
+
+      var svg = d3.select("#treeSVG").attr("width", width)
           .attr("height", height)
           .attr("class",null);
-  descents = filteredLinks.filter(function(l) {
-      return parseInt(l.action)==1;
+
+      var root =  findRootNode(filteredNodes, filteredLinks); 
+      //console.log(Object.values(root));
+    // Creazione della gerarchia dei nodi
+      var nodeById = d3.map();
+      filteredNodes.forEach(function(nodo) {
+        nodo.children = []; // Inizializza 'children' come array vuoto
+        nodo.same = [];
+        nodeById.set(nodo.id, nodo);
+      });
+      filteredLinks.forEach(function(coll) {
+      var parent = nodeById.get(coll.source.id);
+      var person = nodeById.get(coll.target.id);
+
+      if (coll.action === 1) {
+        parent.children.push(person);
+      } else {
+        parent.same.push(person);
+      }
     });
-  pairs = filteredLinks.filter(function(l) {
-    return parseInt(l.action)!=1;
-  });
 
-  while (filteredNodes.length != 0){
-    let levelNodes = [];
-    for (let i = 0; i < filteredNodes.length; i++){
-      let flag = true;
-      for(let j=0;j<descents.length;j++){
-        if (descents[j].source == filteredNodes[i]) {
-          flag = false;
-          break;
-        }
-      }
-      if (flag == true) {
-        levelNodes.push(filteredNodes[i]);
-        filteredNodes.splice(i, 1);
-        i--;
-      }
-    }
-    allNodes = allNodes.concat(levelNodes);
-    console.log(allNodes)
-    spanX = width/(levelNodes.length+1);
-    drawNode(svg,allNodes,spanX,spanY);
-    spanY += 100;
-    drawEdges(svg,levelLinks);
-    levelLinks = [];
-    for (let i = 0; i < descents.length; i++){
-      for(let j=0;j<levelNodes.length;j++){
-        if (descents[i].target == levelNodes[j]) {
-          levelLinks.push(descents[i]);
-          descents.splice(i, 1);
-          i--;
-          break;
-        }
-      }
-    }
 
-  }
-  drawEdges(svg,pairs);
+
+      var nodesG = tree.nodes(root);
+      var linksG = tree.links(nodesG);
+      //console.log(nodesG);
+      //console.log(linksG);
+
+      var nodiNuovi=[];
+      svg.selectAll(".node")
+        .data(nodesG)
+        .enter().append("circle")
+        .attr("class", "node")
+        .attr("r", 10)
+        .attr("fill", function(d){ return color(d.gender);})
+        .attr("cx", function(d) { return d.y; })
+        .attr("cy", function(d) { nodiNuovi.push([d.id,d.x,d.y]);return d.x; });    //fare questo in un ciclo a parte 
+                                                                                    //per risolvere problema cosa si vede meglio
+
+
+        svg.selectAll("path")
+          .data(tree.links(nodesG))
+          .enter().append("path")
+          .attr("d", function(d) {
+
+            var sorgente = nodiNuovi.filter(function(el) {
+              //console.log(el[0]+ " "+ d.source.id);
+              return el[0] === d.source.id;
+            });
+            var destinatario = nodiNuovi.filter(function(el) {
+              return el[0] === d.target.id;
+            });
+        
+            //console.log("Sorgente: "+sorgente[1]+" "+sorgente[2]+" | Destinatario: "+destinatario[1]+" " +destinatario[2]);
+            var source = { x: (sorgente[0])[1], y: (sorgente[0])[2] };
+            var target = { x: (destinatario[0])[1], y: (destinatario[0])[2] };
+            return "M" + source.y + "," + source.x + "L" + target.y + "," + target.x;
+          })
+          .style("stroke", "gray")
+          .style("stroke-width", 2);
+    svg.selectAll(".node").raise();
+    
+      
 }
 
 function showLink(){
