@@ -77,22 +77,27 @@ function isNodeInComponent(node, component) {
   return component.has(node.id);
 }
 
-function drawNode(svg,n,x,y){
-  console.log(y)
-  node = svg.selectAll(".node")
-      .data(n)
+function drawNodes(svg,data){
+  spanY = 100
+  const groups = svg.selectAll("g")
+    .data(data)
+    .enter()
+    .append("g")
+    .attr("transform", (d, i) => `translate(0, ${i * spanY})`);
+  groups.selectAll("circle")
+      .data(d => d)
       .enter().append("circle")
       .attr("class", "node")
       .attr("r", 5)
       .style("fill", function(d) { return color(d.gender); })
-      .attr("cx", (d, i) => (i+1) * x)
-      .attr("cy",y);
+      .attr("cx", (d, i) => i * 50 + 50)
+      .attr("cy",spanY/2);
       
 }
 
-function drawEdges(svg,descents){
-  link = svg.selectAll(".link")
-  .data(descents)
+function drawEdges(svg,data){
+  svg.selectAll(".link")
+  .data(data)
   .enter().append("line")
   .attr("class", "link")
   .style("stroke-width", function(d) { return 3; })
@@ -131,12 +136,12 @@ function createTree(filteredNodes,filteredLinks) {
         i--;
       }
     }
-    allNodes = allNodes.concat(levelNodes);
+    allNodes.push(levelNodes);
     console.log(allNodes)
-    spanX = width/(levelNodes.length+1);
-    drawNode(svg,allNodes,spanX,spanY);
-    spanY += 100;
-    drawEdges(svg,levelLinks);
+    // spanX = width/(levelNodes.length+1);
+    // drawNodes(svg,allNodes,spanX,spanY);
+    // spanY += 100;
+    // drawEdges(svg,levelLinks);
     levelLinks = [];
     for (let i = 0; i < descents.length; i++){
       for(let j=0;j<levelNodes.length;j++){
@@ -150,7 +155,40 @@ function createTree(filteredNodes,filteredLinks) {
     }
 
   }
-  drawEdges(svg,pairs);
+  drawNodes(svg,allNodes);
+  drawEdges(svg,filteredLinks);
+
+  var charge = document.getElementById("charge").value;
+  var linkDistance = document.getElementById("linkDistance").value;
+  var gravity = document.getElementById("gravity").value;
+  var linkStrength = document.getElementById("linkStrength").value;
+  var friction = document.getElementById("friction").value;
+  var theta = document.getElementById("theta").value;
+  var alpha = document.getElementById("alpha").value;
+  var chargeDistance = document.getElementById("chargeDistance").value;
+  var chapterSelect = document.getElementById("chapter-select");
+
+  
+  force = d3.layout.force()
+      .charge(charge)
+      .linkDistance(linkDistance)
+      .gravity(gravity)
+      .friction(friction)
+      .linkStrength(linkStrength)
+      .size([width, height])
+      .alpha(alpha)
+      .theta(theta)
+      .chargeDistance(chargeDistance);
+  force.start();
+  force.on("tick", function() {
+    link.attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+
+    node.attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; }); 
+  });   
 }
 
 function showLink(){

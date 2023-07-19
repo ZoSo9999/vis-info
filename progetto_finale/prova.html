@@ -1,44 +1,57 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <title>Grafico Genealogico</title>
-   
-  </head>
-  <body>
-    <svg id="container" width="1200" height="1000"></svg>
-    <script src="d3.v7.min.js"></script>
-    <script>
-      const svg = d3.select("#container");
-
-function disegnaCerchi(datiCerchi,i) {
-  const cerchi = svg.selectAll("circle")
-    .data(datiCerchi)
-    .enter()
-    .append("circle");
-
-  cerchi.merge(cerchi)
-    .attr("cx", (d, i) => (i + 1) * 80) // Posizione lungo l'asse x
-    .attr("cy", i*100) // Posizione lungo l'asse y
-    .attr("r", (d) => d) // Raggio dei cerchi basato sui dati
-    .attr("fill", "steelblue"); // Colore dei cerchi
-}
-
-// Creiamo un array di dati per le iterazioni
-const datiIterazioni = [
-  [20, 40, 60],
-  [10, 30, 50],
-  [15, 25, 35, 45, 55, 60]
+<head>
+  <meta charset="utf-8">
+  <title>Grafico D3.js</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    /* Stile per i cerchi */
+    .node {
+      fill: steelblue;
+      stroke: #fff;
+      stroke-width: 2px;
+    }
+  </style>
+</head>
+<body>
+  <svg id="graph" width="800" height="400"></svg>
+  <script>
+    // Esempio di dati organizzati come lista di liste
+const data = [
+  [1, 2, 3],
+  [4, 5],
+  [6, 7, 8, 9],
+  [10]
 ];
 
-// Iteriamo attraverso l'array di dati e chiamiamo la funzione disegnaCerchi() per ogni iterazione
-for (let i = 0; i < datiIterazioni.length; i++) {
-  const datiIterazione = datiIterazioni[i];
-  disegnaCerchi(datiIterazione,i+1);
-}
+// Altezza tra le liste
+const verticalSpacing = 100;
 
-    </script>
-  </body>
+// Creazione del grafico con D3.js
+const svg = d3.select("#graph");
+
+// Crea un gruppo (g) per ogni lista e aggiungilo al grafico
+const groups = svg.selectAll("g")
+  .data(data)
+  .enter()
+  .append("g")
+  .attr("transform", (d, i) => `translate(0, ${i * verticalSpacing})`);
+
+// Crea un cerchio per ogni elemento nella lista
+groups.selectAll("circle")
+  .data(d => d)
+  .enter()
+  .append("circle")
+  .attr("class", "node")
+  .attr("r", 20) // Imposta il raggio del cerchio
+  .attr("cx", (d, i) => i * 50 + 50) // Imposta la coordinata cx in base all'indice dell'elemento
+  .attr("cy", 50); // Imposta la coordinata cy al centro dell'altezza della lista
+
+
+
+
+  </script>
+</body>
 </html>
 
 
