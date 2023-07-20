@@ -104,7 +104,7 @@ function drawEdges(svg,filteredLinks){
     var x2=document.getElementById(l.target.id).getAttribute('cx');
     var y2=parseInt(document.getElementById(l.target.id).getAttribute('cy'))
               +parseInt(document.getElementById(l.target.id).parentNode.getAttribute('y'));
-    console.log(x1+" "+x2+" "+y1+" "+y2);
+    //console.log(x1+" "+x2+" "+y1+" "+y2);
     svg.append('line')
     .attr('x1', x1)
     .attr('y1', y1)
@@ -361,6 +361,7 @@ if(primaVolta===true){
   d3.selectAll(".node")                                        //GESTIONE NODI
   .on("click", function(clickedNode) {              //ON CLICK
     d3.select(".popup").remove();
+    d3.select("#treeSVG").selectAll("*").remove();
     
 
     var selectedNodeId = clickedNode.id; // id del nodo selezionato
