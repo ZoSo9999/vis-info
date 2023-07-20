@@ -83,25 +83,37 @@ function drawNodes(svg,data){
     .data(data)
     .enter()
     .append("g")
-    .attr("transform", (d, i) => `translate(0, ${i * spanY})`);
+    .attr("transform", (d, i) => `translate(0, ${i * spanY})`)
+    .attr("y",(d, i) => i * spanY);
   groups.selectAll("circle")
       .data(d => d)
       .enter().append("circle")
       .attr("class", "node")
       .attr("r", 10)
+      .attr("id",function(d) { return d.id; })
       .style("fill", function(d) { return color(d.gender); })
       .attr("cx", (d, i) => i * 50 + 50)
-      .attr("cy",spanY/2);
-      
+      .attr("cy", spanY/2);
 }
 
-function drawEdges(svg,data){
-  svg.selectAll(".link")
-  .data(data)
-  .enter().append("line")
-  .attr("class", "link")
-  .style("stroke-width", function(d) { return 3; })
-  .style("stroke","#828282");
+function drawEdges(svg,filteredLinks){
+  filteredLinks.forEach(function(l){
+    var x1=document.getElementById(l.source.id).getAttribute('cx');
+    var y1=parseInt(document.getElementById(l.source.id).getAttribute('cy'))
+              +parseInt(document.getElementById(l.source.id).parentNode.getAttribute('y'));
+    var x2=document.getElementById(l.target.id).getAttribute('cx');
+    var y2=parseInt(document.getElementById(l.target.id).getAttribute('cy'))
+              +parseInt(document.getElementById(l.target.id).parentNode.getAttribute('y'));
+    console.log(x1+" "+x2+" "+y1+" "+y2);
+    svg.append('line')
+    .attr('x1', x1)
+    .attr('y1', y1)
+    .attr('x2', x2)
+    .attr('y2', y2)
+    .attr('stroke', 'blue')
+    .attr('stroke-width', 2);
+  })
+  
 }
 
 function createTree(filteredNodes,filteredLinks) {
@@ -147,12 +159,10 @@ function createTree(filteredNodes,filteredLinks) {
             break;
         }
       }
-      console.log(levelNodes);
       if(risultato==false){
         filteredNodes.push(levelNodes[i]);
         levelNodes.splice(i, 1);
         i--;
-        console.log("rimosso "+levelNodes[i]);
       }
       //console.log("i "+i);
     }
