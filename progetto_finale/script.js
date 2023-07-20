@@ -88,7 +88,7 @@ function drawNodes(svg,data){
       .data(d => d)
       .enter().append("circle")
       .attr("class", "node")
-      .attr("r", 5)
+      .attr("r", 10)
       .style("fill", function(d) { return color(d.gender); })
       .attr("cx", (d, i) => i * 50 + 50)
       .attr("cy",spanY/2);
@@ -104,7 +104,6 @@ function drawEdges(svg,data){
   .style("stroke","#828282");
 }
 
-
 function createTree(filteredNodes,filteredLinks) {
   
   allNodes = [];
@@ -117,7 +116,7 @@ function createTree(filteredNodes,filteredLinks) {
       return parseInt(l.action)==1;
     });
   pairs = filteredLinks.filter(function(l) {
-    return parseInt(l.action)!=1;
+    return parseInt(l.action)==2;
   });
 
   while (filteredNodes.length != 0){
@@ -128,16 +127,37 @@ function createTree(filteredNodes,filteredLinks) {
         if (descents[j].source == filteredNodes[i]) {
           flag = false;
           break;
-        }
+        }  
       }
+
       if (flag == true) {
-        levelNodes.push(filteredNodes[i]);
-        filteredNodes.splice(i, 1);
-        i--;
+          levelNodes.push(filteredNodes[i]);
+          filteredNodes.splice(i, 1);
+          i--;
       }
     }
+    for(let i=0;i<levelNodes.length;i++){
+      var risultato = true;
+      for(let j=0;j<pairs.length;j++){
+        if(pairs[j].source == levelNodes[i]){
+            risultato=levelNodes.includes(pairs[j].target);
+            break;
+        }else if(pairs[j].target == levelNodes[i]){
+            risultato=levelNodes.includes(pairs[j].source);
+            break;
+        }
+      }
+      console.log(levelNodes);
+      if(risultato==false){
+        filteredNodes.push(levelNodes[i]);
+        levelNodes.splice(i, 1);
+        i--;
+        console.log("rimosso "+levelNodes[i]);
+      }
+      //console.log("i "+i);
+    }
     allNodes.push(levelNodes);
-    console.log(allNodes)
+    //console.log(levelNodes);
     // spanX = width/(levelNodes.length+1);
     // drawNodes(svg,allNodes,spanX,spanY);
     // spanY += 100;
@@ -154,41 +174,12 @@ function createTree(filteredNodes,filteredLinks) {
       }
     }
 
+
   }
+
   drawNodes(svg,allNodes);
   drawEdges(svg,filteredLinks);
-
-  var charge = document.getElementById("charge").value;
-  var linkDistance = document.getElementById("linkDistance").value;
-  var gravity = document.getElementById("gravity").value;
-  var linkStrength = document.getElementById("linkStrength").value;
-  var friction = document.getElementById("friction").value;
-  var theta = document.getElementById("theta").value;
-  var alpha = document.getElementById("alpha").value;
-  var chargeDistance = document.getElementById("chargeDistance").value;
-  var chapterSelect = document.getElementById("chapter-select");
-
-  
-  force = d3.layout.force()
-      .charge(charge)
-      .linkDistance(linkDistance)
-      .gravity(gravity)
-      .friction(friction)
-      .linkStrength(linkStrength)
-      .size([width, height])
-      .alpha(alpha)
-      .theta(theta)
-      .chargeDistance(chargeDistance);
-  force.start();
-  force.on("tick", function() {
-    link.attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y; })
-        .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y; });
-
-    node.attr("cx", function(d) { return d.x; })
-        .attr("cy", function(d) { return d.y; }); 
-  });   
+  showNode();
 }
 
 function showLink(){
