@@ -83,7 +83,7 @@ function drawNodes(svg,data){
     .data(data)
     .enter()
     .append("g")
-    .attr("transform", (d, i) => `translate(0, ${i * spanY})`)
+    .attr("transform", (d, i) => `translate(40, ${i * spanY})`)
     .attr("y",(d, i) => i * spanY);
   groups.selectAll("circle")
       .data(d => d)
@@ -98,22 +98,21 @@ function drawNodes(svg,data){
 
 function drawEdges(svg,filteredLinks){
   filteredLinks.forEach(function(l){
-    var x1=document.getElementById(l.source.id).getAttribute('cx');
-    var y1=parseInt(document.getElementById(l.source.id).getAttribute('cy'))
-              +parseInt(document.getElementById(l.source.id).parentNode.getAttribute('y'));
-    var x2=document.getElementById(l.target.id).getAttribute('cx');
-    var y2=parseInt(document.getElementById(l.target.id).getAttribute('cy'))
-              +parseInt(document.getElementById(l.target.id).parentNode.getAttribute('y'));
-    //console.log(x1+" "+x2+" "+y1+" "+y2);
-    svg.append('line')
-    .attr('x1', x1)
-    .attr('y1', y1)
-    .attr('x2', x2)
-    .attr('y2', y2)
-    .attr('stroke', 'blue')
-    .attr('stroke-width', 2);
+      var x1=parseInt(document.getElementById(l.source.id).getAttribute('cx'))+40;
+      var y1=parseInt(document.getElementById(l.source.id).getAttribute('cy'))
+                +parseInt(document.getElementById(l.source.id).parentNode.getAttribute('y'));
+      var x2=parseInt(document.getElementById(l.target.id).getAttribute('cx'))+40;
+      var y2=parseInt(document.getElementById(l.target.id).getAttribute('cy'))
+                +parseInt(document.getElementById(l.target.id).parentNode.getAttribute('y'));
+
+      svg.append('line')
+        .attr('x1', x1)
+        .attr('y1', y1)
+        .attr('x2', x2)
+        .attr('y2', y2)
+        .style("stroke-width", function(d) { return 3; })
+        .style("stroke","#828282");
   })
-  
 }
 
 function createTree(filteredNodes,filteredLinks) {
@@ -121,8 +120,8 @@ function createTree(filteredNodes,filteredLinks) {
   allNodes = [];
   spanY = 100;
   levelLinks = [];
-  svg = d3.select("#treeSVG").attr("width", width)
-          .attr("height", height)
+  svg = d3.select("#treeSVG").attr("width", 300)
+          .attr("height", 600)
           .attr("class",null);
   descents = filteredLinks.filter(function(l) {
       return parseInt(l.action)==1;
@@ -164,14 +163,8 @@ function createTree(filteredNodes,filteredLinks) {
         levelNodes.splice(i, 1);
         i--;
       }
-      //console.log("i "+i);
     }
     allNodes.push(levelNodes);
-    //console.log(levelNodes);
-    // spanX = width/(levelNodes.length+1);
-    // drawNodes(svg,allNodes,spanX,spanY);
-    // spanY += 100;
-    // drawEdges(svg,levelLinks);
     levelLinks = [];
     for (let i = 0; i < descents.length; i++){
       for(let j=0;j<levelNodes.length;j++){
@@ -183,13 +176,13 @@ function createTree(filteredNodes,filteredLinks) {
         }
       }
     }
-
-
   }
 
   drawNodes(svg,allNodes);
   drawEdges(svg,filteredLinks);
   showNode();
+/*    var line=d3.selectAll("line")
+  console.log((line[0])[0]); */ 
 }
 
 function showLink(){
@@ -199,7 +192,8 @@ function showLink(){
     var actionDescription = actionCodesObject['action description'];
     d3.select("#link-info")
     .text(d.source.label + " " + actionDescription + " " +d.target.label)
-    .style("visibility", "visible");
+    .style("visibility", "visible")
+    .style("font-size", "25px"); 
   })
   .on("mouseout", function() {
   d3.select("#link-info").style("visibility", "hidden");
