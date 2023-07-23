@@ -77,26 +77,43 @@ function isNodeInComponent(node, component) {
   return component.has(node.id);
 }
 
-function drawNodes(svg,data){
-  spanY = 100
+function drawNodes(svg,data,selectedNodeId){
+  const spanY = 100
+  const linksGroup = svg.append("g")
+      .attr("id", "linksGroup");
   const groups = svg.selectAll("g")
+    .filter(function(d) {return this.getAttribute("id") !== "linksGroup";})
     .data(data)
     .enter()
     .append("g")
     .attr("transform", (d, i) => `translate(40, ${i * spanY})`)
     .attr("y",(d, i) => i * spanY);
-  groups.selectAll("circle")
+  const nodes = groups.selectAll("circle")
       .data(d => d)
       .enter().append("circle")
       .attr("class", "node")
-      .attr("r", 10)
-      .attr("id",function(d) { return d.id; })
+      .attr("r", function(d) {
+        if (d.id === selectedNodeId) {
+            return 8;
+        } else {
+            return 5; 
+        }
+      })
+      .attr("id",function(d) {return d.id;})
       .style("fill", function(d) { return color(d.gender); })
       .attr("cx", (d, i) => i * 50 + 50)
       .attr("cy", spanY/2);
+  data.flat().forEach((d) => {
+    let y = parseInt(document.getElementById(d.id).getAttribute('cy'))
+            + parseInt(document.getElementById(d.id).parentNode.getAttribute('y'));
+    let x = parseInt(document.getElementById(d.id).getAttribute('cx'))
+    d.tx = x;
+    d.ty = y;
+  });
 }
 
 function drawEdges(svg,filteredLinks){
+
   filteredLinks.forEach(function(l){
       var x1=parseInt(document.getElementById(l.source.id).getAttribute('cx'))+40;
       var y1=parseInt(document.getElementById(l.source.id).getAttribute('cy'))
@@ -105,7 +122,8 @@ function drawEdges(svg,filteredLinks){
       var y2=parseInt(document.getElementById(l.target.id).getAttribute('cy'))
                 +parseInt(document.getElementById(l.target.id).parentNode.getAttribute('y'));
 
-      svg.append('line')
+      svg.select("#linksGroup")
+        .append('line')
         .attr('x1', x1)
         .attr('y1', y1)
         .attr('x2', x2)
@@ -113,9 +131,10 @@ function drawEdges(svg,filteredLinks){
         .style("stroke-width", function(d) { return 3; })
         .style("stroke","#828282");
   })
+  d3.selectAll("line").attr("order", -1);
 }
 
-function createTree(filteredNodes,filteredLinks) {
+function createTree(filteredNodes,filteredLinks,selectedNodeId) {
   
   allNodes = [];
   spanY = 100;
@@ -178,9 +197,9 @@ function createTree(filteredNodes,filteredLinks) {
     }
   }
 
-  drawNodes(svg,allNodes);
+  drawNodes(svg,allNodes,selectedNodeId);
   drawEdges(svg,filteredLinks);
-  showNode();
+  showNodeforTree();
 /*    var line=d3.selectAll("line")
   console.log((line[0])[0]); */ 
 }
@@ -199,7 +218,6 @@ function showLink(){
   d3.select("#link-info").style("visibility", "hidden");
   });
 }
-
 
 function showNode(){
   d3.selectAll(".node")                                                   //GESTIONE NODI
@@ -230,6 +248,35 @@ function showNode(){
   });
 
 }
+
+
+function showNodeforTree(){
+  d3.selectAll(".node")
+  .on("mouseover", function(d) {
+    var popup = d3.select("body")
+      .append("div")
+      .attr("class", "popup")
+      .style("left", d3.event.pageX + "px")
+      .style("top", d3.event.pageY + "px");
+
+    popup.append("h2")
+      .text(d.label + "[" +d.id+"]");
+    if (d.chapter !== undefined) {
+      popup.append("p")
+        .text("Chapter: " + d.chapter);
+    }
+    var genderCodesObject = window.gender_codes[d.gender];
+    var genderDescription = genderCodesObject['gender description'];
+    if (d.gender !== undefined) {
+      popup.append("p")
+        .text("Gender: " + genderDescription);
+    }})
+  .on("mouseout", function(d) {
+    d3.select(".popup").remove();
+  });
+
+}
+
 
 
 
@@ -409,7 +456,7 @@ if(primaVolta===true){
 	
 	    showLink();
 	    showNode();
-      createTree(filteredNodes,filteredLinks);
+      createTree(filteredNodes,filteredLinks,selectedNodeId);
   });
 
   force.on("tick", function() {
