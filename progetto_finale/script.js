@@ -112,6 +112,13 @@ function drawNodes(svg,data,selectedNodeId){
   });
 }
 
+function readAction(nAction){
+  var actionCodesObject = window.action_codes[nAction];
+  var actionDescription = actionCodesObject['action description'];
+  return actionDescription;
+}
+
+
 function drawEdges(svg,filteredLinks){
 
   filteredLinks.forEach(function(l){
@@ -128,7 +135,8 @@ function drawEdges(svg,filteredLinks){
         .attr('y1', y1)
         .attr('x2', x2)
         .attr('y2', y2)
-        .style("stroke-width", function(d) { return 3; })
+        .attr('etichetta', l.source.label+" "+readAction(l.action)+" "+l.target.label)
+        .style("stroke-width", function(d) { return 5; })
         .style("stroke","#828282");
   })
   d3.selectAll("line").attr("order", -1);
@@ -200,8 +208,8 @@ function createTree(filteredNodes,filteredLinks,selectedNodeId) {
   drawNodes(svg,allNodes,selectedNodeId);
   drawEdges(svg,filteredLinks);
   showNodeforTree();
-/*    var line=d3.selectAll("line")
-  console.log((line[0])[0]); */ 
+  showLinkForTree();
+  
 }
 
 function showLink(){
@@ -217,6 +225,23 @@ function showLink(){
   .on("mouseout", function() {
   d3.select("#link-info").style("visibility", "hidden");
   });
+}
+
+function showLinkForTree(){
+  var lines=d3.selectAll("svg#treeSVG line")
+  var linesOfInterest = lines[0];
+  console.log(linesOfInterest);
+  d3.selectAll(linesOfInterest)
+  .on("mouseover", function(d) {
+    var etichetta=d3.select(this).attr('etichetta');
+    d3.select("#link-info")
+    .text(etichetta)
+    .style("visibility", "visible")
+    .style("font-size", "25px"); 
+  })
+  .on("mouseout", function() {
+  d3.select("#link-info").style("visibility", "hidden");
+  }); 
 }
 
 function showNode(){
@@ -355,7 +380,7 @@ if(primaVolta===true){
                     return result;
         })
         .attr("class", "link")
-        .style("stroke-width", function(d) { return 3; })
+        .style("stroke-width", function(d) { return 4; })
         .style("stroke","#828282");
 
     node = svg.selectAll(".node")
@@ -432,7 +457,7 @@ if(primaVolta===true){
       .data(filteredLinks)
       .enter().append("line")
       .attr("class", "link")
-      .style("stroke-width", function(d) { return 3; })
+      .style("stroke-width", function(d) { return 5; })
       .style("stroke","#828282");
 
     // Filtra i nodi mantenendo solo quelli appartenenti alla componente connessa
