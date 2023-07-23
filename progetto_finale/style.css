@@ -17,6 +17,12 @@ html, body {
     padding: 10px;
     opacity: 0.9;
   }
+  .container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Questo assume che ci siano due colonne per i bottoni */
+    grid-gap: 10px; /* Regola qui la spaziatura tra i bottoni */
+  }
+  
 
 .saga-button {
   background-color: #f5f0e1;

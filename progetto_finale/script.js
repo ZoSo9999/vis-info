@@ -338,8 +338,9 @@ function draw(){
 
 
  
-  svg = d3.select("#graphSVG").attr("width", width)
-                .attr("height", height);
+  svg = d3.select("#graphSVG")
+          .attr("width", width)
+          .attr("height", height);
 
   nodi = window.nodes;
   links = window.links;
