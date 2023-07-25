@@ -136,7 +136,7 @@ function drawEdges(svg,filteredLinks){
         .attr('x2', x2)
         .attr('y2', y2)
         .attr('etichetta', l.source.label+" "+readAction(l.action)+" "+l.target.label)
-        .style("stroke-width", function(d) { return 5; })
+        .style("stroke-width", function(d) { return 3; })
         .style("stroke","#828282");
   })
   d3.selectAll("line").attr("order", -1);
@@ -147,9 +147,7 @@ function createTree(filteredNodes,filteredLinks,selectedNodeId) {
   allNodes = [];
   spanY = 100;
   levelLinks = [];
-  svg = d3.select("#treeSVG").attr("width", 300)
-          .attr("height", 600)
-          .attr("class",null);
+  svg = d3.select("#treeSVG");
   descents = filteredLinks.filter(function(l) {
       return parseInt(l.action)==1;
     });
@@ -207,7 +205,7 @@ function createTree(filteredNodes,filteredLinks,selectedNodeId) {
 
   drawNodes(svg,allNodes,selectedNodeId);
   drawEdges(svg,filteredLinks);
-  showNodeforTree();
+  showNode();
   showLinkForTree();
   
 }
@@ -230,7 +228,7 @@ function showLink(){
 function showLinkForTree(){
   var lines=d3.selectAll("svg#treeSVG line")
   var linesOfInterest = lines[0];
-  console.log(linesOfInterest);
+  //console.log(linesOfInterest);
   d3.selectAll(linesOfInterest)
   .on("mouseover", function(d) {
     var etichetta=d3.select(this).attr('etichetta');
@@ -244,38 +242,38 @@ function showLinkForTree(){
   }); 
 }
 
+// function showNode(){
+//   d3.selectAll(".node")                                                   //GESTIONE NODI
+//   .on("mouseover", function(d) {            //ON MOUSEOVER
+//     // Creazione del popup
+//     var popup = d3.select("body")
+//       .append("div")
+//       .attr("class", "popup")
+//       .style("left", (d.x) + "px")
+//       .style("top", (d.y) + "px");
+
+//     // Aggiungi le informazioni del nodo al popup
+//     popup.append("h2")
+//       .text(d.label + "[" +d.id+"]");
+//     if (d.chapter !== undefined) {
+//       popup.append("p")
+//         .text("Chapter: " + d.chapter);
+//     }
+//     var genderCodesObject = window.gender_codes[d.gender];
+//     var genderDescription = genderCodesObject['gender description'];
+//     if (d.gender !== undefined) {
+//       popup.append("p")
+//         .text("Gender: " + genderDescription);
+//     }})
+//   .on("mouseout", function(d) {             //ON MOUSEOUT
+//     // Rimuovi il popup
+//     d3.select(".popup").remove();
+//   });
+
+// }
+
+
 function showNode(){
-  d3.selectAll(".node")                                                   //GESTIONE NODI
-  .on("mouseover", function(d) {            //ON MOUSEOVER
-    // Creazione del popup
-    var popup = d3.select("body")
-      .append("div")
-      .attr("class", "popup")
-      .style("left", (d.x-80) + "px")
-      .style("top", (d.y-20) + "px");
-
-    // Aggiungi le informazioni del nodo al popup
-    popup.append("h2")
-      .text(d.label + "[" +d.id+"]");
-    if (d.chapter !== undefined) {
-      popup.append("p")
-        .text("Chapter: " + d.chapter);
-    }
-    var genderCodesObject = window.gender_codes[d.gender];
-    var genderDescription = genderCodesObject['gender description'];
-    if (d.gender !== undefined) {
-      popup.append("p")
-        .text("Gender: " + genderDescription);
-    }})
-  .on("mouseout", function(d) {             //ON MOUSEOUT
-    // Rimuovi il popup
-    d3.select(".popup").remove();
-  });
-
-}
-
-
-function showNodeforTree(){
   d3.selectAll(".node")
   .on("mouseover", function(d) {
     var popup = d3.select("body")
@@ -299,7 +297,6 @@ function showNodeforTree(){
   .on("mouseout", function(d) {
     d3.select(".popup").remove();
   });
-
 }
 
 
@@ -316,6 +313,8 @@ function draw(){
   var alpha = document.getElementById("alpha").value;
   var chargeDistance = document.getElementById("chargeDistance").value;
   var chapterSelect = document.getElementById("chapter-select");
+
+  showNodeOK = false;
 
   
   force = d3.layout.force()
@@ -350,15 +349,17 @@ if(primaVolta===true){
     link.source = link.source - 1;
     link.target = link.target - 1;
   });
+  d3.selectAll(".intro")
+    .classed("hidden",true);
+  d3.selectAll(".main")
+    .classed("hidden",false);
+  d3.select("#treeSVG")
+    .classed("hidden",false)
+    .attr("width",300)
+    .attr("height",600);
 }
 
   primaVolta=false;
-
-  force.nodes(nodi)
-    .links(links)
-    .start();
-
- 
 
   if(document.getElementById("myCheckbox").checked){                      //GENERAZIONE GRAFO SPECIFICO
      
@@ -420,10 +421,6 @@ if(primaVolta===true){
         .style("fill", function(d) { return color(d.gender); })
         .call(force.drag);
   }
- 
-	showNode();
-  showLink();
-
 
   d3.selectAll(".node")                                        //GESTIONE NODI
   .on("click", function(clickedNode) {              //ON CLICK
@@ -451,39 +448,43 @@ if(primaVolta===true){
     //   siblings.push(couple);
     // });
 
-	  link.remove();
-    node.remove();
+	  // link.remove();
+    // node.remove();
 	
-    link = svg.selectAll(".link")
-      .data(filteredLinks)
-      .enter().append("line")
-      .attr("class", "link")
-      .style("stroke-width", function(d) { return 5; })
-      .style("stroke","#828282");
+    // link = svg.selectAll(".link")
+    //   .data(filteredLinks)
+    //   .enter().append("line")
+    //   .attr("class", "link")
+    //   .style("stroke-width", function(d) { return 3; })
+    //   .style("stroke","#828282");
 
     // Filtra i nodi mantenendo solo quelli appartenenti alla componente connessa
     var filteredNodes = nodi.filter(function(d) {
       return isNodeInComponent(d, selectedComponent);
     });
 
-    node = svg.selectAll(".node")
-      .data(filteredNodes)
-      .enter().append("circle")
-      .attr("class", "node")
-      .attr("r", function(d) {
-        if (d.id === selectedNodeId) {
-            return 8;
-        } else {
-            return 5; 
-        }
-      })
-      .style("fill", function(d) { return color(d.gender); })
-      .call(force.drag);
+    // node = svg.selectAll(".node")
+    //   .data(filteredNodes)
+    //   .enter().append("circle")
+    //   .attr("class", "node")
+    //   .attr("r", function(d) {
+    //     if (d.id === selectedNodeId) {
+    //         return 8;
+    //     } else {
+    //         return 5; 
+    //     }
+    //   })
+    //   .style("fill", function(d) { return color(d.gender); })
+    //   .call(force.drag);
 	
-	    showLink();
-	    showNode();
+	    // showLink();
+	    // showNode();
       createTree(filteredNodes,filteredLinks,selectedNodeId);
   });
+
+  force.nodes(nodi)
+    .links(links)
+    .start();
 
   force.on("tick", function() {
     link.attr("x1", function(d) { return d.source.x; })
@@ -494,38 +495,50 @@ if(primaVolta===true){
     node.attr("cx", function(d) { return d.x; })
         .attr("cy", function(d) { return d.y; }); 
   });   
+
+  setTimeout(function() {
+    //force.stop();
+    showNode();
+    showLink();
+}, 2500);
   
   
 }
  
-function resume(){
+// function resume(){
 
-  var width = 900;
-  var height = 600;
+//   var width = 900;
+//   var height = 600;
 
-  var charge = document.getElementById("charge").value;
-  var linkDistance = document.getElementById("linkDistance").value;
-  var gravity = document.getElementById("gravity").value;
-  var linkStrength = document.getElementById("linkStrength").value;
-  var friction = document.getElementById("friction").value;
-  var theta = document.getElementById("theta").value;
-  var alpha = document.getElementById("alpha").value;
-  var chargeDistance = document.getElementById("chargeDistance").value;
+//   var charge = document.getElementById("charge").value;
+//   var linkDistance = document.getElementById("linkDistance").value;
+//   var gravity = document.getElementById("gravity").value;
+//   var linkStrength = document.getElementById("linkStrength").value;
+//   var friction = document.getElementById("friction").value;
+//   var theta = document.getElementById("theta").value;
+//   var alpha = document.getElementById("alpha").value;
+//   var chargeDistance = document.getElementById("chargeDistance").value;
   
-  force.charge(charge)
-    .linkDistance(linkDistance)
-    .gravity(gravity)
-    .friction(friction)
-    .linkStrength(linkStrength)
-    .size([width, height])
-    .alpha(alpha)
-    .theta(theta)
-    .chargeDistance(chargeDistance);
+//   force.charge(charge)
+//     .linkDistance(linkDistance)
+//     .gravity(gravity)
+//     .friction(friction)
+//     .linkStrength(linkStrength)
+//     .size([width, height])
+//     .alpha(alpha)
+//     .theta(theta)
+//     .chargeDistance(chargeDistance);
 
+//   shoNodeOK = false;
   
-  force.start();
+//   force.start();
 
-}
+//   setTimeout(function() {
+//     force.stop();
+//     shoNodeOK = true;
+// }, 5000);
+
+// }
 
 window.addEventListener("beforeunload", function(event) {
   document.getElementById("drawButton").disabled = true;
@@ -533,5 +546,7 @@ window.addEventListener("beforeunload", function(event) {
   document.getElementById("myCheckbox").checked = false;
   document.getElementById("check-span").classList.add('hidden');
   document.getElementById("treeSVG").classList.add('hidden');
+  document.getElementsByClassName("intro").classList.remove('hidden');
+  document.getElementsByClassName("main").classList.add('hidden');
   //event.returnValue = "Stai per lasciare la pagina. Sei sicuro di volerla ricaricare?";
 });
