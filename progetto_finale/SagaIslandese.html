@@ -10,7 +10,7 @@
 <body id="body">
 
 <center><h1 class="italic-title">Hrafnkels saga</h1></center>
-
+<br>
 <table class="center">
 <tr>
   <td>
@@ -54,13 +54,12 @@
 <p id="lista"></p>
 
 <center>
-<div id="link-info"></div>
-<svg id="graphSVG" style="border-style: solid; width: 900; height: 600"/>
-<svg id="treeSVG" style="border-style: solid" class="hidden"/>
+<svg id="graphSVG" style="border-style: solid;"/>
+<svg id="treeSVG" style="border-style: solid;" class="hidden"/>
+<div id="link-info" style="font-size: 25px; visibility:hidden">VUOTO</div>
 </center>
 
-<div style="height: 50px;"></div>
-<table style="border: 1px solid black;margin: 0 auto;">
+<table style="border: 1px solid black;margin: 0 auto;" class="hidden">
   <caption>Caratteristiche del grafo</caption>
 <tr>
   <td align="right">Charge:</td>
@@ -111,11 +110,14 @@
     
 </tr>
 </table>
-<div style="padding: 10px 20px; display: flex; align-items: center;justify-content: center;">
-  <button id="updateButton" onClick="resume()"  class="saga-button"  disabled>Update Parameters</button>
+<div style="padding: 10px 20px; display: flex; align-items: center;justify-content: center;" >
+  <button id="updateButton" onClick="resume()"  class="saga-button hidden" disabled>Update Parameters</button>
 </div>
-
-</body>
   <div style="height: 100;"></div>
-  <p style="text-align: center; bottom: 0;">Federico Tocci | Filippo Iacobelli</p>
+<p style="text-align: center; bottom: 0;" class="intro">Questo tool permette di disegnare un grafo per comprendere meglio quali siano i legami fra i personaggi della saga isaldese "Hrafnkels".</p>
+<p style="text-align: center; bottom: 0;" class="intro">Per iniziare carica i dati e disegna il relativo grafo con gli appositi pulsanti.</p>
+<p style="text-align: center; bottom: 0;" class="intro">Puoi decidere se disegnare i personaggi dell'intera saga o quelli di uno specifico capitolo.</p>
+<p style="text-align: center; bottom: 0;" class="main hidden">È possibile mantenere il cursore su di un nodo per alcuni secondo in modo da ottenere informazioni su quel personaggio e transitare su di un link per compredere quale sia il lageme fra i personaggi.</p>
+<p style="text-align: center; bottom: 0;" class="main hidden">Il click di un nodo provoca la creazione di un albero genealogico del personaggio nel riquadro affianco.</p>
+</body>
 </html>
